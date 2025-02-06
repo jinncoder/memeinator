@@ -150,13 +150,13 @@ class APIHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"")
 
-        elif self.path.startswith("/lib/") and len(self.path) > 6:
+        elif self.path.startswith("/static/") and len(self.path) > 6:
             parts = self.path.split("/")
 
             if len(parts) == 3:
                 filename = parts[-1]
 
-                filepath = pathlib.PosixPath(f"lib/{filename}")
+                filepath = pathlib.PosixPath(f"static/{filename}")
 
                 if filepath.exists(follow_symlinks=False):
                     self.send_response(200)
