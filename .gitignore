@@ -1,0 +1,4 @@
+.zig-cache
+zig-out
+api_images
+__pycache__

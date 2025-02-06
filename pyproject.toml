@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "memeinator"
+version = "0.1.0"
+requires-python = "~=3.10"
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["memeinator"]
+
+[project.scripts]
+memeinator = "memeinator.__main__:entry"

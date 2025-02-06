@@ -1,0 +1,3 @@
+[submodule "memeinator/client/zigwin32"]
+	path = memeinator/client/zigwin32
+	url = https://github.com/ArchiMoebius/zigwin32.git

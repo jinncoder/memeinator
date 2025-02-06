@@ -1,0 +1,101 @@
+name: Continuous Deployment
+
+on:
+  push:
+    tags:
+      - "v*-*-*"
+
+jobs:
+  changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+    outputs:
+      release_body: ${{ steps.git-cliff.outputs.content }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate a Changelog
+        uses: orhun/git-cliff-action@v4
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+
+  publish-binaries:
+    name: Publish Binaries
+    needs: changelog
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        zig: [0.13.0]
+        python: [3.10]
+      fail-fast: false
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: "pip"
+
+      - name: Set the release version
+        run: echo "RELEASE_VERSION=${GITHUB_REF:11}" >> $GITHUB_ENV
+
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: ${{ matrix.zig }}
+
+      - name: Show Zig version
+        run: |
+          zig version
+          zig env
+
+      - name: Show Python version
+        run: |
+          python --version
+
+      - name: Install Hatch
+        uses: pypa/hatch@install
+
+      - name: Build package
+        run: hatch build
+
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          cp {LICENSE,README.md,CHANGELOG.md} dist/ || echo ""
+          mv dist memeinator-${{ env.RELEASE_VERSION }}/
+
+      - name: Create release artifacts
+        shell: bash
+        run: |
+          if [[ "${{ matrix.TARGET }}" = *"windows" ]]; then
+            7z a -tzip memeinator-${{ env.RELEASE_VERSION }}-${{ matrix.TARGET }}.zip \
+              memeinator-${{ env.RELEASE_VERSION }}/
+          else
+            tar -czvf memeinator-${{ env.RELEASE_VERSION }}-${{ matrix.TARGET }}.tar.gz \
+              memeinator-${{ env.RELEASE_VERSION }}/
+            shasum -a 512 memeinator-${{ env.RELEASE_VERSION }}-${{ matrix.TARGET }}.tar.gz \
+              > memeinator-${{ env.RELEASE_VERSION }}-${{ matrix.TARGET }}.tar.gz.sha512
+          fi
+
+      - name: Upload the binary releases
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: memeinator-${{ env.RELEASE_VERSION }}-${{ matrix.TARGET }}*
+          file_glob: true
+          overwrite: true
+          tag: ${{ github.ref }}
+          release_name: "Release v${{ env.RELEASE_VERSION }}"
+          body: ${{ needs.changelog.outputs.release_body }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
