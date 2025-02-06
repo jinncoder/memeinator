@@ -6,7 +6,6 @@
 #                                                                             #
 ###############################################################################
 
-import argparse
 import json
 import os
 import pathlib
@@ -63,16 +62,11 @@ def download_memes(path):
                     f.write(dat)
             print("Downloaded " + filename)
 
+def entry():
+    meme_template_path = BASEPATH / "static" / "meme_template"
+    meme_template_path.mkdir(parents=True, exist_ok=True)
+
+    download_memes(str(meme_template_path))
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Downloads memes to the given directory"
-    )
-    parser.add_argument(
-        "path",
-        default=f"{BASEPATH}/api_images",
-        help="the path to download to (default to server/img/memes)",
-    )
-    args = parser.parse_args()
-
-    download_memes(args.path)
+    entry()

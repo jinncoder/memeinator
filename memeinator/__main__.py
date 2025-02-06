@@ -16,6 +16,7 @@ from functools import partial
 RE_CLEAN_HEADER = re.compile(r"[^a-zA-Z0-9\s]")
 TMP_MEME_PATH = pathlib.PosixPath("/tmp/active_meme.png")
 BASEPATH = pathlib.PosixPath(__file__).parent
+MEME_TEMPLATE_PATH = BASEPATH / "static" / "meme_template"
 REQUEST_TRACKER = {}
 
 
@@ -24,11 +25,10 @@ def find_images_in_directory(directory):
     Walk through the directory and return a list of image file paths.
     """
     image_files = []
-    valid_extensions = ".png"
 
     for file in directory.rglob("*"):
-        if file.suffix.lower() in valid_extensions and file.is_file():
-            image_files.append(str(file))
+        if file.is_file() and file.suffix.lower() == ".jpg":
+            image_files.append(f"static/meme_template/{file.name}")
 
     return image_files
 
@@ -91,8 +91,7 @@ class APIHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     This is the user facing portion of the server - trust those with whome tis exposed
     """
 
-    def __init__(self, *args, api_image_directory, **kwargs):
-        self.api_image_directory = pathlib.PosixPath(api_image_directory)
+    def __init__(self, *args, **kwargs):
 
         with open("index.html", "rb") as fh:
             self.index_html = fh.read()
@@ -128,35 +127,24 @@ class APIHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(self.index_html)
 
-        elif (
-            self.path.startswith(f"/{self.api_image_directory}/")
-            and len(self.path) > len(str(self.api_image_directory)) + 2
-        ):
-            parts = self.path.split("/")
+        elif self.path == "/list_images":
+            response = find_images_in_directory(MEME_TEMPLATE_PATH)
 
-            if len(parts) == 3:
-
-                filepath = self.api_image_directory / parts[-1]
-
-                if filepath.exists(follow_symlinks=False):
-                    self.send_response(200)
-                    self.send_header("Content-type", "image/png")
-                    self.end_headers()
-                    self.wfile.write(filepath.read_bytes())
-                    return
-
-            self.send_response(404)
-            self.send_header("Content-type", "text/html")
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
             self.end_headers()
-            self.wfile.write(b"")
+            self.wfile.write(json.dumps(response).encode())
 
         elif self.path.startswith("/static/") and len(self.path) > 6:
             parts = self.path.split("/")
 
-            if len(parts) == 3:
+            if len(parts) == 3 or "meme_template" in str(self.path):
                 filename = parts[-1]
 
                 filepath = pathlib.PosixPath(f"static/{filename}")
+
+                if "meme_template" in str(self.path):
+                    filepath = MEME_TEMPLATE_PATH / filename
 
                 if filepath.exists(follow_symlinks=False):
                     self.send_response(200)
@@ -165,9 +153,18 @@ class APIHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                         self.send_header("Content-type", "text/javascript")
                     elif filename.endswith(".css"):
                         self.send_header("Content-type", "text/css")
+                    elif filename.endswith(".png"):
+                        self.send_header("Content-type", "image/png")
+                    elif filename.endswith(".jpg"):
+                        self.send_header("Content-type", "image/jpg")
+                    elif filename.endswith(".ico"):
+                        self.send_header("Content-type", "image/ico")
+                    elif filename.endswith(".webmanifest"):
+                        self.send_header("Content-type", "text/plain")
 
                     self.end_headers()
                     self.wfile.write(filepath.read_bytes())
+
                     return
 
             self.send_response(404)
@@ -175,12 +172,6 @@ class APIHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"")
 
-        elif self.path == "/list_images":
-            response = find_images_in_directory(self.api_image_directory)
-            self.send_response(200)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(response).encode())
         else:
             self.send_error(404, "Not Found")
 
@@ -276,11 +267,8 @@ def run_main_server(ip="0.0.0.0", port=8080):
             httpd.shutdown()
 
 
-def run_api_server(ip="127.0.0.1", port=8081, api_dir=None):
-    handler = partial(
-        APIHTTPRequestHandler,
-        api_image_directory=api_dir,
-    )
+def run_api_server(ip="127.0.0.1", port=8081):
+    handler = partial(APIHTTPRequestHandler)
 
     with ReusableTCPServer((ip, port), handler) as httpd:
         print(f"API Server running on http://{ip}:{port}")
@@ -292,13 +280,13 @@ def run_api_server(ip="127.0.0.1", port=8081, api_dir=None):
 
 
 # Run both servers in separate threads
-def run_servers(client_ip, client_port, api_ip, api_port, api_dir):
+def run_servers(client_ip, client_port, api_ip, api_port):
     main_server_thread = threading.Thread(
         target=run_main_server, args=(client_ip, client_port), daemon=True
     )
 
     api_server_thread = threading.Thread(
-        target=run_api_server, args=(api_ip, api_port, api_dir), daemon=True
+        target=run_api_server, args=(api_ip, api_port), daemon=True
     )
 
     main_server_thread.start()
@@ -338,12 +326,6 @@ def entry():
         default=8081,
         help="API server port.",
     )
-    parser.add_argument(
-        "--api-image-directory",
-        type=str,
-        default=f"{BASEPATH}/api_images",
-        help="Directory for API image listing.",
-    )
 
     args = parser.parse_args()
 
@@ -352,7 +334,6 @@ def entry():
         client_port=args.client_server_port,
         api_ip=args.api_server_ip,
         api_port=args.api_server_port,
-        api_dir=args.api_image_directory,
     )
 
 

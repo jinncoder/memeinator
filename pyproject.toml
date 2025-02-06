@@ -13,3 +13,4 @@ packages = ["memeinator"]
 
 [project.scripts]
 memeinator = "memeinator.__main__:entry"
+memeinator-download = "memeinator.download_memes:entry"

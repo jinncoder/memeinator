@@ -134,9 +134,10 @@ $("sendit").addEventListener('click', () => {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('Success:', data);
+        alert("Set active meme!");
     })
     .catch((error) => {
+        alert("Failed to set meme...");
         console.error('Error:', error);
     });
 });
@@ -277,8 +278,11 @@ $("buildit").addEventListener("click", async () => {
         downloadLink.download = 'client.exe';
 
         downloadLink.click();
+
+        alert("Client built!");
     })
     .catch((error) => {
+        alert("Failed to build client...");
         console.error('Error:', error);
     });
 });
